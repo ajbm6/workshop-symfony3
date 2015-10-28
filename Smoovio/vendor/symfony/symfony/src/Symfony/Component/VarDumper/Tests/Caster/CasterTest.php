@@ -157,18 +157,7 @@ class CasterTest extends VarDumperTestCase
 
         $this->assertDumpMatchesFormat(
             <<<'EOTXT'
-stdClass@anonymous {
-  -foo: "foo"
-}
-EOTXT
-            , $c
-        );
-
-        $c = eval('return new class { private $foo = "foo"; };');
-
-        $this->assertDumpMatchesFormat(
-            <<<'EOTXT'
-@anonymous {
+anonymous-stdClass {
   -foo: "foo"
 }
 EOTXT

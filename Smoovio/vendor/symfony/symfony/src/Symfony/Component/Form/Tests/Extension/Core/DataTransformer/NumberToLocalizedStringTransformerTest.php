@@ -238,6 +238,8 @@ class NumberToLocalizedStringTransformerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @see https://github.com/symfony/symfony/issues/7609
+     *
+     * @requires extension mbstring
      */
     public function testReverseTransformWithGroupingAndFixedSpaces()
     {
@@ -581,6 +583,7 @@ class NumberToLocalizedStringTransformerTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
      * @expectedExceptionMessage The number contains unrecognized characters: "foo8"
+     * @requires extension mbstring
      */
     public function testReverseTransformDisallowsCenteredExtraCharactersMultibyte()
     {
@@ -597,6 +600,7 @@ class NumberToLocalizedStringTransformerTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
      * @expectedExceptionMessage The number contains unrecognized characters: "foo8"
+     * @requires extension mbstring
      */
     public function testReverseTransformIgnoresTrailingSpacesInExceptionMessage()
     {
@@ -624,6 +628,7 @@ class NumberToLocalizedStringTransformerTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
      * @expectedExceptionMessage The number contains unrecognized characters: "foo"
+     * @requires extension mbstring
      */
     public function testReverseTransformDisallowsTrailingExtraCharactersMultibyte()
     {

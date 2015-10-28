@@ -59,6 +59,9 @@ class XliffFileLoaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array('foo' => 'bar', 'extra' => 'extra', 'key' => '', 'test' => 'with'), $catalogue->all('domain1'));
     }
 
+    /**
+     * @requires extension mbstring
+     */
     public function testEncoding()
     {
         $loader = new XliffFileLoader();

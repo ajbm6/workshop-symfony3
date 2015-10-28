@@ -3,7 +3,7 @@
 /*
  * This file is part of the Symfony CMF package.
  *
- * (c) 2011-2014 Symfony CMF
+ * (c) 2011-2015 Symfony CMF
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -55,6 +55,19 @@ class ChainRouterTest extends CmfUnitTestCase
             $high,
             $low,
         ), $this->router->all());
+    }
+
+    public function testHasRouters()
+    {
+        $this->assertEquals(array(), $this->router->all());
+        $this->assertFalse($this->router->hasRouters());
+
+        list($low, $high) = $this->createRouterMocks();
+
+        $this->router->add($low, 10);
+        $this->router->add($high, 100);
+
+        $this->assertTrue($this->router->hasRouters());
     }
 
     /**

@@ -41,9 +41,6 @@ class TranslationDebugCommand extends ContainerAwareCommand
     {
         $this
             ->setName('debug:translation')
-            ->setAliases(array(
-                'translation:debug',
-            ))
             ->setDefinition(array(
                 new InputArgument('locale', InputArgument::REQUIRED, 'The locale'),
                 new InputArgument('bundle', InputArgument::OPTIONAL, 'The bundle name or directory where to load the messages, defaults to app/Resources folder'),
@@ -93,9 +90,6 @@ EOF
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output = new SymfonyStyle($input, $output);
-        if (false !== strpos($input->getFirstArgument(), ':d')) {
-            $output->caution('The use of "translation:debug" command is deprecated since version 2.7 and will be removed in 3.0. Use the "debug:translation" instead.');
-        }
 
         $locale = $input->getArgument('locale');
         $domain = $input->getOption('domain');
@@ -240,7 +234,7 @@ EOF
     {
         $string = trim(preg_replace('/\s+/', ' ', $string));
 
-        if (false !== $encoding = mb_detect_encoding($string, null, true)) {
+        if (function_exists('mb_strlen') && false !== $encoding = mb_detect_encoding($string)) {
             if (mb_strlen($string, $encoding) > $length) {
                 return mb_substr($string, 0, $length - 3, $encoding).'...';
             }

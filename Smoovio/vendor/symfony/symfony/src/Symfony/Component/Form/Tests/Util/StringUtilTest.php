@@ -24,6 +24,7 @@ class StringUtilTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider spaceProvider
+     * @requires extension mbstring
      */
     public function testTrimUtf8Separators($hex)
     {

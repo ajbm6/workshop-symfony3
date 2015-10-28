@@ -3,7 +3,7 @@
 /*
  * This file is part of the Symfony CMF package.
  *
- * (c) 2011-2014 Symfony CMF
+ * (c) 2011-2015 Symfony CMF
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -27,18 +27,18 @@ class RegisterRouteEnhancersPassTest extends \PHPUnit_Framework_TestCase
             ),
         );
 
+        $builder = $this->getContainerBuilderMock();
         $definition = new Definition('router');
-        $builder = $this->getMock('Symfony\Component\DependencyInjection\ContainerBuilder');
         $builder->expects($this->at(0))
             ->method('hasDefinition')
             ->with('cmf_routing.dynamic_router')
             ->will($this->returnValue(true))
         ;
-        $builder->expects($this->once())
+        $builder->expects($this->any())
             ->method('findTaggedServiceIds')
             ->will($this->returnValue($serviceIds))
         ;
-        $builder->expects($this->once())
+        $builder->expects($this->any())
             ->method('getDefinition')
             ->with('cmf_routing.dynamic_router')
             ->will($this->returnValue($definition))
@@ -58,7 +58,7 @@ class RegisterRouteEnhancersPassTest extends \PHPUnit_Framework_TestCase
      */
     public function testNoDynamicRouter()
     {
-        $builder = $this->getMock('Symfony\Component\DependencyInjection\ContainerBuilder');
+        $builder = $this->getContainerBuilderMock();
         $builder->expects($this->once())
             ->method('hasDefinition')
             ->with('cmf_routing.dynamic_router')
@@ -67,5 +67,13 @@ class RegisterRouteEnhancersPassTest extends \PHPUnit_Framework_TestCase
 
         $pass = new RegisterRouteEnhancersPass();
         $pass->process($builder);
+    }
+    
+    protected function getContainerBuilderMock(array $functions = array())
+    {
+        return $this->getMock(
+            'Symfony\Component\DependencyInjection\ContainerBuilder',
+            array_merge(array('hasDefinition', 'findTaggedServiceIds', 'getDefinition'), $functions)
+        );
     }
 }

@@ -182,9 +182,24 @@ abstract class AbstractCloner implements ClonerInterface
      */
     public function cloneVar($var, $filter = 0)
     {
+        $this->prevErrorHandler = set_error_handler(function ($type, $msg, $file, $line, $context) {
+            if (E_RECOVERABLE_ERROR === $type || E_USER_ERROR === $type) {
+                // Cloner never dies
+                throw new \ErrorException($msg, 0, $type, $file, $line);
+            }
+
+            if ($this->prevErrorHandler) {
+                return call_user_func($this->prevErrorHandler, $type, $msg, $file, $line, $context);
+            }
+
+            return false;
+        });
         $this->filter = $filter;
-        $this->prevErrorHandler = set_error_handler(array($this, 'handleError'));
+
         try {
+            if (!function_exists('iconv')) {
+                $this->maxString = -1;
+            }
             $data = $this->doClone($var);
         } catch (\Exception $e) {
         }
@@ -221,12 +236,14 @@ abstract class AbstractCloner implements ClonerInterface
         $class = $stub->class;
 
         if (isset($class[15]) && "\0" === $class[15] && 0 === strpos($class, "class@anonymous\x00")) {
-            $stub->class = get_parent_class($class).'@anonymous';
+            $class = get_parent_class($class);
+            $stub->class = 'anonymous-'.$class;
         }
         if (isset($this->classInfo[$class])) {
             $classInfo = $this->classInfo[$class];
         } else {
             $classInfo = array(
+                $class,
                 new \ReflectionClass($class),
                 array_reverse(array($class => $class) + class_parents($class) + class_implements($class) + array('*' => '*')),
             );
@@ -234,9 +251,9 @@ abstract class AbstractCloner implements ClonerInterface
             $this->classInfo[$class] = $classInfo;
         }
 
-        $a = $this->callCaster('Symfony\Component\VarDumper\Caster\Caster::castObject', $obj, $classInfo[0], null, $isNested);
+        $a = $this->callCaster('Symfony\Component\VarDumper\Caster\Caster::castObject', $obj, $classInfo[1], null, $isNested);
 
-        foreach ($classInfo[1] as $p) {
+        foreach ($classInfo[2] as $p) {
             if (!empty($this->casters[$p = strtolower($p)])) {
                 foreach ($this->casters[$p] as $p) {
                     $a = $this->callCaster($p, $obj, $a, $stub, $isNested);
@@ -294,24 +311,5 @@ abstract class AbstractCloner implements ClonerInterface
         }
 
         return $a;
-    }
-
-    /**
-     * Special handling for errors: cloning must be fail-safe.
-     *
-     * @internal
-     */
-    public function handleError($type, $msg, $file, $line, $context)
-    {
-        if (E_RECOVERABLE_ERROR === $type || E_USER_ERROR === $type) {
-            // Cloner never dies
-            throw new \ErrorException($msg, 0, $type, $file, $line);
-        }
-
-        if ($this->prevErrorHandler) {
-            return call_user_func($this->prevErrorHandler, $type, $msg, $file, $line, $context);
-        }
-
-        return false;
     }
 }

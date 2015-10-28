@@ -30,8 +30,6 @@ use Symfony\Component\Intl\Locale\Locale;
  *
  * @author Igor Wiedler <igor@wiedler.ch>
  * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @internal
  */
 class Collator
 {

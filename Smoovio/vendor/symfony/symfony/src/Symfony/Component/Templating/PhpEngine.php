@@ -330,9 +330,6 @@ class PhpEngine implements EngineInterface, \ArrayAccess
      */
     public function setCharset($charset)
     {
-        if ('UTF8' === $charset = strtoupper($charset)) {
-            $charset = 'UTF-8'; // iconv on Windows requires "UTF-8" instead of "UTF8"
-        }
         $this->charset = $charset;
 
         foreach ($this->helpers as $helper) {
@@ -356,7 +353,7 @@ class PhpEngine implements EngineInterface, \ArrayAccess
      * @param string   $context The escaper context (html, js, ...)
      * @param callable $escaper A PHP callable
      */
-    public function setEscaper($context, $escaper)
+    public function setEscaper($context, callable $escaper)
     {
         $this->escapers[$context] = $escaper;
         self::$escaperCache[$context] = array();
@@ -418,12 +415,7 @@ class PhpEngine implements EngineInterface, \ArrayAccess
      */
     protected function initializeEscapers()
     {
-        $that = $this;
-        if (PHP_VERSION_ID >= 50400) {
-            $flags = ENT_QUOTES | ENT_SUBSTITUTE;
-        } else {
-            $flags = ENT_QUOTES;
-        }
+        $flags = ENT_QUOTES | ENT_SUBSTITUTE;
 
         $this->escapers = array(
             'html' =>
@@ -434,10 +426,10 @@ class PhpEngine implements EngineInterface, \ArrayAccess
                  *
                  * @return string the escaped value
                  */
-                function ($value) use ($that, $flags) {
+                function ($value) use ($flags) {
                     // Numbers and Boolean values get turned into strings which can cause problems
                     // with type comparisons (e.g. === or is_int() etc).
-                    return is_string($value) ? htmlspecialchars($value, $flags, $that->getCharset(), false) : $value;
+                    return is_string($value) ? htmlspecialchars($value, $flags, $this->getCharset(), false) : $value;
                 },
 
             'js' =>
@@ -449,12 +441,12 @@ class PhpEngine implements EngineInterface, \ArrayAccess
                  *
                  * @return string the escaped value
                  */
-                function ($value) use ($that) {
-                    if ('UTF-8' != $that->getCharset()) {
-                        $value = iconv($that->getCharset(), 'UTF-8', $value);
+                function ($value) {
+                    if ('UTF-8' != $this->getCharset()) {
+                        $value = $this->convertEncoding($value, 'UTF-8', $this->getCharset());
                     }
 
-                    $callback = function ($matches) use ($that) {
+                    $callback = function ($matches) {
                         $char = $matches[0];
 
                         // \xHH
@@ -463,7 +455,7 @@ class PhpEngine implements EngineInterface, \ArrayAccess
                         }
 
                         // \uHHHH
-                        $char = iconv('UTF-8', 'UTF-16BE', $char);
+                        $char = $this->convertEncoding($char, 'UTF-16BE', 'UTF-8');
 
                         return '\\u'.substr('0000'.bin2hex($char), -4);
                     };
@@ -472,8 +464,8 @@ class PhpEngine implements EngineInterface, \ArrayAccess
                         throw new \InvalidArgumentException('The string to escape is not a valid UTF-8 string.');
                     }
 
-                    if ('UTF-8' != $that->getCharset()) {
-                        $value = iconv('UTF-8', $that->getCharset(), $value);
+                    if ('UTF-8' != $this->getCharset()) {
+                        $value = $this->convertEncoding($value, $this->getCharset(), 'UTF-8');
                     }
 
                     return $value;
@@ -492,13 +484,17 @@ class PhpEngine implements EngineInterface, \ArrayAccess
      *
      * @return string The string with the new encoding
      *
-     * @deprecated since 2.8, to be removed in 3.0. Use iconv() instead.
+     * @throws \RuntimeException if no suitable encoding function is found (iconv or mbstring)
      */
     public function convertEncoding($string, $to, $from)
     {
-        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.8 and will be removed in 3.0. Use iconv() instead.', E_USER_DEPRECATED);
+        if (function_exists('mb_convert_encoding')) {
+            return mb_convert_encoding($string, $to, $from);
+        } elseif (function_exists('iconv')) {
+            return iconv($from, $to, $string);
+        }
 
-        return iconv($from, $to, $string);
+        throw new \RuntimeException('No suitable convert encoding function (use UTF-8 as your encoding or install the iconv or mbstring extension).');
     }
 
     /**

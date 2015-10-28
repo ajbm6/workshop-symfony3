@@ -464,6 +464,9 @@ TABLE
         );
     }
 
+    /**
+     * @requires extension mbstring
+     */
     public function testRenderMultiByte()
     {
         $table = new Table($output = $this->getOutputStream());

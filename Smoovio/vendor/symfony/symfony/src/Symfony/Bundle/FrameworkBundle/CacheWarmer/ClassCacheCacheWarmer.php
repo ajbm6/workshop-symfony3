@@ -34,10 +34,6 @@ class ClassCacheCacheWarmer implements CacheWarmerInterface
             return;
         }
 
-        if (file_exists($cacheDir.'/classes.php')) {
-            return;
-        }
-
         ClassCollectionLoader::load(include($classmap), $cacheDir, 'classes', false);
     }
 

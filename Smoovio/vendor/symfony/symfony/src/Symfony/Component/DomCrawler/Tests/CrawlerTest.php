@@ -77,6 +77,16 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Attaching DOM nodes from multiple documents in the same crawler is forbidden.
+     */
+    public function testAddMultipleDocumentNode()
+    {
+        $crawler = $this->createTestCrawler();
+        $crawler->addHtmlContent('<html><div class="foo"></html>', 'UTF-8');
+    }
+
+    /**
      * @covers Symfony\Component\DomCrawler\Crawler::addHtmlContent
      */
     public function testAddHtmlContent()
@@ -102,6 +112,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers Symfony\Component\DomCrawler\Crawler::addHtmlContent
+     * @requires extension mbstring
      */
     public function testAddHtmlContentCharset()
     {
@@ -136,6 +147,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers Symfony\Component\DomCrawler\Crawler::addHtmlContent
+     * @requires extension mbstring
      */
     public function testAddHtmlContentCharsetGbk()
     {
@@ -537,16 +549,6 @@ EOF
         $this->assertCount(0, $crawler->filterXPath('.'), '->filterXPath() returns an empty result if the XPath references the fake root node');
         $this->assertCount(0, $crawler->filterXPath('self::*'), '->filterXPath() returns an empty result if the XPath references the fake root node');
         $this->assertCount(0, $crawler->filterXPath('self::_root'), '->filterXPath() returns an empty result if the XPath references the fake root node');
-    }
-
-    /** @group legacy */
-    public function testLegacyFilterXPathWithFakeRoot()
-    {
-        $crawler = $this->createTestCrawler();
-        $this->assertCount(0, $crawler->filterXPath('/_root'), '->filterXPath() returns an empty result if the XPath references the fake root node');
-
-        $crawler = $this->createTestCrawler()->filterXPath('//body');
-        $this->assertCount(1, $crawler->filterXPath('/_root/body'));
     }
 
     public function testFilterXPathWithAncestorAxis()

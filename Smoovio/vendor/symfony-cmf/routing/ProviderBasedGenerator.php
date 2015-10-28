@@ -3,7 +3,7 @@
 /*
  * This file is part of the Symfony CMF package.
  *
- * (c) 2011-2014 Symfony CMF
+ * (c) 2011-2015 Symfony CMF
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -91,7 +91,7 @@ class ProviderBasedGenerator extends UrlGenerator implements VersatileGeneratorI
         }
 
         if ($name instanceof SymfonyRoute) {
-            return 'Route with pattern ' . $name->getPattern();
+            return 'Route with path ' . $name->getPath();
         }
 
         return get_class($name);

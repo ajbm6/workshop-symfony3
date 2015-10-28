@@ -19,41 +19,27 @@ use Symfony\Component\Config\FileLocator;
 class LiipFunctionalTestExtension extends Extension
 {
     /**
-     * XML config files to load
-     * @var array
-     */
-    protected $resources = array(
-        'config' => 'functional_test.xml',
-    );
-
-    /**
      * Loads the services based on your application configuration.
      *
-     * @param array $configs
+     * @param array            $configs
      * @param ContainerBuilder $container
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $config = array_shift($configs);
-        foreach ($configs as $tmp) {
-            $config = array_replace_recursive($config, $tmp);
-        }
+        $config = $this->processConfiguration(new Configuration(), $configs);
 
-        $loader = $this->getFileLoader($container);
-        $loader->load($this->resources['config']);
+        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader->load('functional_test.xml');
 
         foreach ($config as $key => $value) {
             $container->setParameter($this->getAlias().'.'.$key, $value);
         }
-    }
 
-    /**
-     * Get File Loader
-     *
-     * @param ContainerBuilder $container
-     */
-    public function getFileLoader($container)
-    {
-        return new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $definition = $container->getDefinition('liip_functional_test.query.count_client');
+        if (method_exists($definition, 'setShared')) {
+            $definition->setShared(false);
+        } else {
+            $definition->setScope('prototype');
+        }
     }
 }
