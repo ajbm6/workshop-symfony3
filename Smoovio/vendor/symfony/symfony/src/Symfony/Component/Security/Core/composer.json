@@ -16,10 +16,9 @@
         }
     ],
     "require": {
-        "php": ">=5.3.3"
+        "php": ">=5.3.9"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "~2.7",
         "symfony/event-dispatcher": "~2.1",
         "symfony/expression-language": "~2.6",
         "symfony/http-foundation": "~2.4",
@@ -36,13 +35,12 @@
         "ircmaxell/password-compat": "For using the BCrypt password encoder in PHP <5.5"
     },
     "autoload": {
-        "psr-0": { "Symfony\\Component\\Security\\Core\\": "" }
+        "psr-4": { "Symfony\\Component\\Security\\Core\\": "" }
     },
-    "target-dir": "Symfony/Component/Security/Core",
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
-            "dev-master": "2.6-dev"
+            "dev-master": "2.7-dev"
         }
     }
 }

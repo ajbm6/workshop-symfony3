@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Routing\Tests\Generator\Dumper;
 
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\Generator\Dumper\PhpGeneratorDumper;
@@ -64,10 +65,10 @@ class PhpGeneratorDumperTest extends \PHPUnit_Framework_TestCase
 
         $projectUrlGenerator = new \ProjectUrlGenerator(new RequestContext('/app.php'));
 
-        $absoluteUrlWithParameter = $projectUrlGenerator->generate('Test', array('foo' => 'bar'), true);
-        $absoluteUrlWithoutParameter = $projectUrlGenerator->generate('Test2', array(), true);
-        $relativeUrlWithParameter = $projectUrlGenerator->generate('Test', array('foo' => 'bar'), false);
-        $relativeUrlWithoutParameter = $projectUrlGenerator->generate('Test2', array(), false);
+        $absoluteUrlWithParameter = $projectUrlGenerator->generate('Test', array('foo' => 'bar'), UrlGeneratorInterface::ABSOLUTE_URL);
+        $absoluteUrlWithoutParameter = $projectUrlGenerator->generate('Test2', array(), UrlGeneratorInterface::ABSOLUTE_URL);
+        $relativeUrlWithParameter = $projectUrlGenerator->generate('Test', array('foo' => 'bar'), UrlGeneratorInterface::ABSOLUTE_PATH);
+        $relativeUrlWithoutParameter = $projectUrlGenerator->generate('Test2', array(), UrlGeneratorInterface::ABSOLUTE_PATH);
 
         $this->assertEquals($absoluteUrlWithParameter, 'http://localhost/app.php/testing/bar');
         $this->assertEquals($absoluteUrlWithoutParameter, 'http://localhost/app.php/testing2');
@@ -118,33 +119,24 @@ class PhpGeneratorDumperTest extends \PHPUnit_Framework_TestCase
     public function testDumpWithSchemeRequirement()
     {
         $this->routeCollection->add('Test1', new Route('/testing', array(), array(), array(), '', array('ftp', 'https')));
-        $this->routeCollection->add('Test2', new Route('/testing_bc', array(), array('_scheme' => 'https'))); // BC
 
         file_put_contents($this->testTmpFilepath, $this->generatorDumper->dump(array('class' => 'SchemeUrlGenerator')));
         include $this->testTmpFilepath;
 
         $projectUrlGenerator = new \SchemeUrlGenerator(new RequestContext('/app.php'));
 
-        $absoluteUrl = $projectUrlGenerator->generate('Test1', array(), true);
-        $absoluteUrlBC = $projectUrlGenerator->generate('Test2', array(), true);
-        $relativeUrl = $projectUrlGenerator->generate('Test1', array(), false);
-        $relativeUrlBC = $projectUrlGenerator->generate('Test2', array(), false);
+        $absoluteUrl = $projectUrlGenerator->generate('Test1', array(), UrlGeneratorInterface::ABSOLUTE_URL);
+        $relativeUrl = $projectUrlGenerator->generate('Test1', array(), UrlGeneratorInterface::ABSOLUTE_PATH);
 
         $this->assertEquals($absoluteUrl, 'ftp://localhost/app.php/testing');
-        $this->assertEquals($absoluteUrlBC, 'https://localhost/app.php/testing_bc');
         $this->assertEquals($relativeUrl, 'ftp://localhost/app.php/testing');
-        $this->assertEquals($relativeUrlBC, 'https://localhost/app.php/testing_bc');
 
         $projectUrlGenerator = new \SchemeUrlGenerator(new RequestContext('/app.php', 'GET', 'localhost', 'https'));
 
-        $absoluteUrl = $projectUrlGenerator->generate('Test1', array(), true);
-        $absoluteUrlBC = $projectUrlGenerator->generate('Test2', array(), true);
-        $relativeUrl = $projectUrlGenerator->generate('Test1', array(), false);
-        $relativeUrlBC = $projectUrlGenerator->generate('Test2', array(), false);
+        $absoluteUrl = $projectUrlGenerator->generate('Test1', array(), UrlGeneratorInterface::ABSOLUTE_URL);
+        $relativeUrl = $projectUrlGenerator->generate('Test1', array(), UrlGeneratorInterface::ABSOLUTE_PATH);
 
         $this->assertEquals($absoluteUrl, 'https://localhost/app.php/testing');
-        $this->assertEquals($absoluteUrlBC, 'https://localhost/app.php/testing_bc');
         $this->assertEquals($relativeUrl, '/app.php/testing');
-        $this->assertEquals($relativeUrlBC, '/app.php/testing_bc');
     }
 }

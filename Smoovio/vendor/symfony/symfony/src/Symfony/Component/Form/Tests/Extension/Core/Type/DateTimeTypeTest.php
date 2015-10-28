@@ -13,13 +13,12 @@ namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\Test\TypeTestCase as TestCase;
-use Symfony\Component\Intl\Util\IntlTestHelper;
 
 class DateTimeTypeTest extends TestCase
 {
     protected function setUp()
     {
-        IntlTestHelper::requireIntl($this);
+        \Locale::setDefault('en');
 
         parent::setUp();
     }
@@ -263,7 +262,6 @@ class DateTimeTypeTest extends TestCase
         $this->assertDateTimeEquals($dateTime, $form->getData());
     }
 
-    // Bug fix
     public function testInitializeWithDateTime()
     {
         // Throws an exception if "data_class" option is not explicitly set
@@ -329,6 +327,9 @@ class DateTimeTypeTest extends TestCase
         $this->assertSame('Empty', $view['time']['second']->vars['placeholder']);
     }
 
+    /**
+     * @group legacy
+     */
     public function testPassEmptyValueBC()
     {
         $form = $this->factory->create('datetime', null, array(

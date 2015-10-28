@@ -24,8 +24,6 @@ use Symfony\Component\ExpressionLanguage\Expression;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Martin Hasoň <martin.hason@gmail.com>
- *
- * @api
  */
 class XmlDumper extends Dumper
 {
@@ -40,8 +38,6 @@ class XmlDumper extends Dumper
      * @param array $options An array of options
      *
      * @return string An xml string representing of the service container
-     *
-     * @api
      */
     public function dump(array $options = array())
     {
@@ -114,17 +110,21 @@ class XmlDumper extends Dumper
         if (null !== $id) {
             $service->setAttribute('id', $id);
         }
-        if ($definition->getClass()) {
-            $service->setAttribute('class', $definition->getClass());
+        if ($class = $definition->getClass()) {
+            if ('\\' === substr($class, 0, 1)) {
+                $class = substr($class, 1);
+            }
+
+            $service->setAttribute('class', $class);
         }
-        if ($definition->getFactoryMethod()) {
-            $service->setAttribute('factory-method', $definition->getFactoryMethod());
+        if ($definition->getFactoryMethod(false)) {
+            $service->setAttribute('factory-method', $definition->getFactoryMethod(false));
         }
-        if ($definition->getFactoryClass()) {
-            $service->setAttribute('factory-class', $definition->getFactoryClass());
+        if ($definition->getFactoryClass(false)) {
+            $service->setAttribute('factory-class', $definition->getFactoryClass(false));
         }
-        if ($definition->getFactoryService()) {
-            $service->setAttribute('factory-service', $definition->getFactoryService());
+        if ($definition->getFactoryService(false)) {
+            $service->setAttribute('factory-service', $definition->getFactoryService(false));
         }
         if (ContainerInterface::SCOPE_CONTAINER !== $scope = $definition->getScope()) {
             $service->setAttribute('scope', $scope);
@@ -135,7 +135,7 @@ class XmlDumper extends Dumper
         if ($definition->isSynthetic()) {
             $service->setAttribute('synthetic', 'true');
         }
-        if ($definition->isSynchronized()) {
+        if ($definition->isSynchronized(false)) {
             $service->setAttribute('synchronized', 'true');
         }
         if ($definition->isLazy()) {
@@ -178,7 +178,11 @@ class XmlDumper extends Dumper
 
         if ($callable = $definition->getFactory()) {
             $factory = $this->document->createElement('factory');
-            if (is_array($callable)) {
+
+            if (is_array($callable) && $callable[0] instanceof Definition) {
+                $this->addService($callable[0], null, $factory);
+                $factory->setAttribute('method', $callable[1]);
+            } elseif (is_array($callable)) {
                 $factory->setAttribute($callable[0] instanceof Reference ? 'service' : 'class', $callable[0]);
                 $factory->setAttribute('method', $callable[1]);
             } else {
@@ -189,7 +193,11 @@ class XmlDumper extends Dumper
 
         if ($callable = $definition->getConfigurator()) {
             $configurator = $this->document->createElement('configurator');
-            if (is_array($callable)) {
+
+            if (is_array($callable) && $callable[0] instanceof Definition) {
+                $this->addService($callable[0], null, $configurator);
+                $configurator->setAttribute('method', $callable[1]);
+            } elseif (is_array($callable)) {
                 $configurator->setAttribute($callable[0] instanceof Reference ? 'service' : 'class', $callable[0]);
                 $configurator->setAttribute('method', $callable[1]);
             } else {

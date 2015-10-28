@@ -27,6 +27,10 @@ class FormExtensionBootstrap3LayoutTest extends AbstractBootstrap3LayoutTest
      */
     protected $extension;
 
+    protected $testableFeatures = array(
+        'choice_attr',
+    );
+
     protected function setUp()
     {
         parent::setUp();
@@ -110,5 +114,15 @@ class FormExtensionBootstrap3LayoutTest extends AbstractBootstrap3LayoutTest
     protected function setTheme(FormView $view, array $themes)
     {
         $this->extension->renderer->setTheme($view, $themes);
+    }
+
+    public function testRange()
+    {
+        // No-op for forward compatibility with AbstractLayoutTest 2.8
+    }
+
+    public function testRangeWithMinMaxValues()
+    {
+        // No-op for forward compatibility with AbstractLayoutTest 2.8
     }
 }

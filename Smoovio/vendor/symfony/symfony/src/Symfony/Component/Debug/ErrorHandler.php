@@ -47,7 +47,7 @@ use Symfony\Component\Debug\FatalErrorHandler\FatalErrorHandlerInterface;
 class ErrorHandler
 {
     /**
-     * @deprecated since 2.6, to be removed in 3.0.
+     * @deprecated since version 2.6, to be removed in 3.0.
      */
     const TYPE_DEPRECATION = -100;
 
@@ -72,19 +72,19 @@ class ErrorHandler
     private $loggers = array(
         E_DEPRECATED => array(null, LogLevel::INFO),
         E_USER_DEPRECATED => array(null, LogLevel::INFO),
-        E_NOTICE => array(null, LogLevel::NOTICE),
-        E_USER_NOTICE => array(null, LogLevel::NOTICE),
-        E_STRICT => array(null, LogLevel::NOTICE),
+        E_NOTICE => array(null, LogLevel::WARNING),
+        E_USER_NOTICE => array(null, LogLevel::WARNING),
+        E_STRICT => array(null, LogLevel::WARNING),
         E_WARNING => array(null, LogLevel::WARNING),
         E_USER_WARNING => array(null, LogLevel::WARNING),
         E_COMPILE_WARNING => array(null, LogLevel::WARNING),
         E_CORE_WARNING => array(null, LogLevel::WARNING),
-        E_USER_ERROR => array(null, LogLevel::ERROR),
-        E_RECOVERABLE_ERROR => array(null, LogLevel::ERROR),
-        E_COMPILE_ERROR => array(null, LogLevel::EMERGENCY),
-        E_PARSE => array(null, LogLevel::EMERGENCY),
-        E_ERROR => array(null, LogLevel::EMERGENCY),
-        E_CORE_ERROR => array(null, LogLevel::EMERGENCY),
+        E_USER_ERROR => array(null, LogLevel::CRITICAL),
+        E_RECOVERABLE_ERROR => array(null, LogLevel::CRITICAL),
+        E_COMPILE_ERROR => array(null, LogLevel::CRITICAL),
+        E_PARSE => array(null, LogLevel::CRITICAL),
+        E_ERROR => array(null, LogLevel::CRITICAL),
+        E_CORE_ERROR => array(null, LogLevel::CRITICAL),
     );
 
     private $thrownErrors = 0x1FFF; // E_ALL - E_DEPRECATED - E_USER_DEPRECATED
@@ -104,14 +104,14 @@ class ErrorHandler
     /**
      * Same init value as thrownErrors.
      *
-     * @deprecated since 2.6, to be removed in 3.0.
+     * @deprecated since version 2.6, to be removed in 3.0.
      */
     private $displayErrors = 0x1FFF;
 
     /**
      * Registers the error handler.
      *
-     * @param self|null|int $handler The handler to register, or @deprecated (since 2.6, to be removed in 3.0) bit field of thrown levels
+     * @param self|null|int $handler The handler to register, or @deprecated (since version 2.6, to be removed in 3.0) bit field of thrown levels
      * @param bool          $replace Whether to replace or not any existing handler
      *
      * @return self The registered error handler
@@ -251,13 +251,13 @@ class ErrorHandler
     public function throwAt($levels, $replace = false)
     {
         $prev = $this->thrownErrors;
-        $this->thrownErrors = ($levels | E_RECOVERABLE_ERROR | E_USER_ERROR) & ~E_USER_DEPRECATED & ~E_DEPRECATED;
+        $this->thrownErrors = (E_ALL | E_STRICT) & ($levels | E_RECOVERABLE_ERROR | E_USER_ERROR) & ~E_USER_DEPRECATED & ~E_DEPRECATED;
         if (!$replace) {
             $this->thrownErrors |= $prev;
         }
         $this->reRegister($prev | $this->loggedErrors);
 
-        // $this->displayErrors is @deprecated since 2.6
+        // $this->displayErrors is @deprecated since version 2.6
         $this->displayErrors = $this->thrownErrors;
 
         return $prev;
@@ -352,7 +352,7 @@ class ErrorHandler
      */
     public function handleError($type, $message, $file, $line, array $context, array $backtrace = null)
     {
-        $level = error_reporting() | E_RECOVERABLE_ERROR | E_USER_ERROR;
+        $level = error_reporting() | E_RECOVERABLE_ERROR | E_USER_ERROR | E_DEPRECATED | E_USER_DEPRECATED;
         $log = $this->loggedErrors & $type;
         $throw = $this->thrownErrors & $type & $level;
         $type &= $level | $this->screamedErrors;
@@ -411,11 +411,11 @@ class ErrorHandler
             if ($this->scopedErrors & $type) {
                 $e['scope_vars'] = $context;
                 if ($trace) {
-                    $e['stack'] = $backtrace ?: debug_backtrace(true); // Provide object
+                    $e['stack'] = $backtrace ?: debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
                 }
             } elseif ($trace) {
                 if (null === $backtrace) {
-                    $e['stack'] = debug_backtrace(PHP_VERSION_ID >= 50306 ? DEBUG_BACKTRACE_IGNORE_ARGS : false);
+                    $e['stack'] = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
                 } else {
                     foreach ($backtrace as &$frame) {
                         unset($frame['args'], $frame);
@@ -445,7 +445,7 @@ class ErrorHandler
     }
 
     /**
-     * Handles an exception by logging then forwarding it to an other handler.
+     * Handles an exception by logging then forwarding it to another handler.
      *
      * @param \Exception|\Throwable $exception An exception to handle
      * @param array                 $error     An array as returned by error_get_last()
@@ -630,10 +630,12 @@ class ErrorHandler
      *
      * @param int|null $level The level (null to use the error_reporting() value and 0 to disable)
      *
-     * @deprecated since 2.6, to be removed in 3.0. Use throwAt() instead.
+     * @deprecated since version 2.6, to be removed in 3.0. Use throwAt() instead.
      */
     public function setLevel($level)
     {
+        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.6 and will be removed in 3.0. Use the throwAt() method instead.', E_USER_DEPRECATED);
+
         $level = null === $level ? error_reporting() : $level;
         $this->throwAt($level, true);
     }
@@ -643,10 +645,12 @@ class ErrorHandler
      *
      * @param int $displayErrors The display_errors flag value
      *
-     * @deprecated since 2.6, to be removed in 3.0. Use throwAt() instead.
+     * @deprecated since version 2.6, to be removed in 3.0. Use throwAt() instead.
      */
     public function setDisplayErrors($displayErrors)
     {
+        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.6 and will be removed in 3.0. Use the throwAt() method instead.', E_USER_DEPRECATED);
+
         if ($displayErrors) {
             $this->throwAt($this->displayErrors, true);
         } else {
@@ -662,10 +666,12 @@ class ErrorHandler
      * @param LoggerInterface $logger  A logger interface
      * @param string          $channel The channel associated with the logger (deprecation, emergency or scream)
      *
-     * @deprecated since 2.6, to be removed in 3.0. Use setLoggers() or setDefaultLogger() instead.
+     * @deprecated since version 2.6, to be removed in 3.0. Use setLoggers() or setDefaultLogger() instead.
      */
     public static function setLogger(LoggerInterface $logger, $channel = 'deprecation')
     {
+        @trigger_error('The '.__METHOD__.' static method is deprecated since version 2.6 and will be removed in 3.0. Use the setLoggers() or setDefaultLogger() methods instead.', E_USER_DEPRECATED);
+
         $handler = set_error_handler('var_dump', 0);
         $handler = is_array($handler) ? $handler[0] : null;
         restore_error_handler();
@@ -685,20 +691,24 @@ class ErrorHandler
     }
 
     /**
-     * @deprecated since 2.6, to be removed in 3.0. Use handleError() instead.
+     * @deprecated since version 2.6, to be removed in 3.0. Use handleError() instead.
      */
     public function handle($level, $message, $file = 'unknown', $line = 0, $context = array())
     {
+        $this->handleError(E_USER_DEPRECATED, 'The '.__METHOD__.' method is deprecated since version 2.6 and will be removed in 3.0. Use the handleError() method instead.', __FILE__, __LINE__, array());
+
         return $this->handleError($level, $message, $file, $line, (array) $context);
     }
 
     /**
      * Handles PHP fatal errors.
      *
-     * @deprecated since 2.6, to be removed in 3.0. Use handleFatalError() instead.
+     * @deprecated since version 2.6, to be removed in 3.0. Use handleFatalError() instead.
      */
     public function handleFatal()
     {
+        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.6 and will be removed in 3.0. Use the handleFatalError() method instead.', E_USER_DEPRECATED);
+
         static::handleFatalError();
     }
 }

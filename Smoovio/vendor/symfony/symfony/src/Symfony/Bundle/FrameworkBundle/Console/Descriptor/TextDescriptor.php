@@ -62,7 +62,7 @@ class TextDescriptor extends Descriptor
         }
 
         $this->writeText($this->formatSection('router', 'Current routes')."\n", $options);
-        $this->renderTable($table, !(isset($options['raw_output']) && $options['raw_output']));
+        $table->render();
     }
 
     /**
@@ -109,7 +109,7 @@ class TextDescriptor extends Descriptor
         }
 
         $this->writeText($this->formatSection('container', 'List of parameters')."\n", $options);
-        $this->renderTable($table, !(isset($options['raw_output']) && $options['raw_output']));
+        $table->render();
     }
 
     /**
@@ -232,7 +232,7 @@ class TextDescriptor extends Descriptor
             }
         }
 
-        $this->renderTable($table);
+        $table->render();
     }
 
     /**
@@ -265,23 +265,25 @@ class TextDescriptor extends Descriptor
         $description[] = sprintf('<comment>Public</comment>           %s', $definition->isPublic() ? 'yes' : 'no');
         $description[] = sprintf('<comment>Synthetic</comment>        %s', $definition->isSynthetic() ? 'yes' : 'no');
         $description[] = sprintf('<comment>Lazy</comment>             %s', $definition->isLazy() ? 'yes' : 'no');
-        $description[] = sprintf('<comment>Synchronized</comment>     %s', $definition->isSynchronized() ? 'yes' : 'no');
+        if (method_exists($definition, 'isSynchronized')) {
+            $description[] = sprintf('<comment>Synchronized</comment>     %s', $definition->isSynchronized(false) ? 'yes' : 'no');
+        }
         $description[] = sprintf('<comment>Abstract</comment>         %s', $definition->isAbstract() ? 'yes' : 'no');
 
         if ($definition->getFile()) {
             $description[] = sprintf('<comment>Required File</comment>    %s', $definition->getFile() ?: '-');
         }
 
-        if ($definition->getFactoryClass()) {
-            $description[] = sprintf('<comment>Factory Class</comment>    %s', $definition->getFactoryClass());
+        if ($definition->getFactoryClass(false)) {
+            $description[] = sprintf('<comment>Factory Class</comment>    %s', $definition->getFactoryClass(false));
         }
 
-        if ($definition->getFactoryService()) {
-            $description[] = sprintf('<comment>Factory Service</comment>  %s', $definition->getFactoryService());
+        if ($definition->getFactoryService(false)) {
+            $description[] = sprintf('<comment>Factory Service</comment>  %s', $definition->getFactoryService(false));
         }
 
-        if ($definition->getFactoryMethod()) {
-            $description[] = sprintf('<comment>Factory Method</comment>   %s', $definition->getFactoryMethod());
+        if ($definition->getFactoryMethod(false)) {
+            $description[] = sprintf('<comment>Factory Method</comment>   %s', $definition->getFactoryMethod(false));
         }
 
         if ($factory = $definition->getFactory()) {
@@ -335,6 +337,7 @@ class TextDescriptor extends Descriptor
         $this->writeText($this->formatSection('event_dispatcher', $label)."\n", $options);
 
         $registeredListeners = $eventDispatcher->getListeners($event);
+
         if (null !== $event) {
             $this->writeText("\n");
             $table = new Table($this->getOutput());
@@ -345,7 +348,7 @@ class TextDescriptor extends Descriptor
                 $table->addRow(array(sprintf('#%d', $order + 1), $this->formatCallable($listener)));
             }
 
-            $this->renderTable($table, true);
+            $table->render();
         } else {
             ksort($registeredListeners);
             foreach ($registeredListeners as $eventListened => $eventListeners) {
@@ -359,7 +362,7 @@ class TextDescriptor extends Descriptor
                     $table->addRow(array(sprintf('#%d', $order + 1), $this->formatCallable($eventListener)));
                 }
 
-                $this->renderTable($table, true);
+                $table->render();
             }
         }
     }

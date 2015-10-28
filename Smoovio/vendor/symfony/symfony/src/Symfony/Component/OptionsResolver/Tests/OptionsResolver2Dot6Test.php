@@ -33,7 +33,7 @@ class OptionsResolver2Dot6Test extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException
-     * @expectedExceptionMessage The option "foo" does not exist. Known options are: "a", "z".
+     * @expectedExceptionMessage The option "foo" does not exist. Defined options are: "a", "z".
      */
     public function testResolveFailsIfNonExistingOption()
     {
@@ -45,7 +45,7 @@ class OptionsResolver2Dot6Test extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Symfony\Component\OptionsResolver\Exception\UndefinedOptionsException
-     * @expectedExceptionMessage The options "baz", "foo", "ping" do not exist. Known options are: "a", "z".
+     * @expectedExceptionMessage The options "baz", "foo", "ping" do not exist. Defined options are: "a", "z".
      */
     public function testResolveFailsIfMultipleNonExistingOptions()
     {
@@ -1103,6 +1103,56 @@ class OptionsResolver2Dot6Test extends \PHPUnit_Framework_TestCase
         $this->resolver->resolve();
     }
 
+    public function testCatchedExceptionFromNormalizerDoesNotCrashOptionResolver()
+    {
+        $throw = true;
+
+        $this->resolver->setDefaults(array('catcher' => null, 'thrower' => null));
+
+        $this->resolver->setNormalizer('catcher', function (Options $options) {
+            try {
+                return $options['thrower'];
+            } catch(\Exception $e) {
+                return false;
+            }
+        });
+
+        $this->resolver->setNormalizer('thrower', function (Options $options) use (&$throw) {
+            if ($throw) {
+                $throw = false;
+                throw new \UnexpectedValueException('throwing');
+            }
+
+            return true;
+        });
+
+        $this->resolver->resolve();
+    }
+
+    public function testCatchedExceptionFromLazyDoesNotCrashOptionResolver()
+    {
+        $throw = true;
+
+        $this->resolver->setDefault('catcher', function (Options $options) {
+            try {
+                return $options['thrower'];
+            } catch(\Exception $e) {
+                return false;
+            }
+        });
+
+        $this->resolver->setDefault('thrower', function (Options $options) use (&$throw) {
+            if ($throw) {
+                $throw = false;
+                throw new \UnexpectedValueException('throwing');
+            }
+
+            return true;
+        });
+
+        $this->resolver->resolve();
+    }
+
     public function testInvokeEachNormalizerOnlyOnce()
     {
         $calls = 0;
@@ -1429,7 +1479,7 @@ class OptionsResolver2Dot6Test extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Symfony\Component\OptionsResolver\Exception\NoSuchOptionException
-     * @expectedExceptionMessage The option "undefined" does not exist. Known options are: "foo", "lazy".
+     * @expectedExceptionMessage The option "undefined" does not exist. Defined options are: "foo", "lazy".
      */
     public function testFailIfGetNonExisting()
     {
