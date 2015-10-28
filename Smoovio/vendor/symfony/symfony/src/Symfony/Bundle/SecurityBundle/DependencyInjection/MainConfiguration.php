@@ -216,6 +216,11 @@ class MainConfiguration implements ConfigurationInterface
                 ->prototype('scalar')->end()
             ->end()
             ->booleanNode('security')->defaultTrue()->end()
+            ->scalarNode('user_checker')
+                ->defaultValue('security.user_checker')
+                ->treatNullLike('security.user_checker')
+                ->info('The UserChecker to use when authenticating users in this firewall.')
+            ->end()
             ->scalarNode('request_matcher')->end()
             ->scalarNode('access_denied_url')->end()
             ->scalarNode('access_denied_handler')->end()
@@ -286,8 +291,22 @@ class MainConfiguration implements ConfigurationInterface
             ->end()
             ->arrayNode('anonymous')
                 ->canBeUnset()
+                ->beforeNormalization()
+                    ->ifTrue(function ($v) { return isset($v['key']); })
+                    ->then(function ($v) {
+                        if (isset($v['secret'])) {
+                            throw new \LogicException('Cannot set both key and secret options for security.firewall.anonymous, use only secret instead.');
+                        }
+
+                        @trigger_error('security.firewall.anonymous.key is deprecated since version 2.8 and will be removed in 3.0. Use security.firewall.anonymous.secret instead.', E_USER_DEPRECATED);
+
+                        $v['secret'] = $v['key'];
+
+                        unset($v['key']);
+                    })
+                ->end()
                 ->children()
-                    ->scalarNode('key')->defaultValue(uniqid('', true))->end()
+                    ->scalarNode('secret')->defaultValue(uniqid('', true))->end()
                 ->end()
             ->end()
             ->arrayNode('switch_user')

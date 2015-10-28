@@ -16,6 +16,7 @@
             <directory>./Acl/Tests/</directory>
             <directory>./Core/Tests/</directory>
             <directory>./Http/Tests/</directory>
+            <directory>./Guard/Tests/</directory>
         </testsuite>
     </testsuites>
 
